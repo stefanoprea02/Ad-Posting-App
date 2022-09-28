@@ -34,19 +34,14 @@ public class AdCommandToAd implements Converter<AdCommand, Ad> {
         }
 
         final Ad ad = new Ad();
-        ad.setId(source.getId());
+
         ad.setTitle(source.getTitle());
-        ad.setImages(source.getImage1(), source.getImage2(), source.getImage3(), source.getImage4(), source.getImage5(),
-                source.getImage6(), source.getImage7(), source.getImage8());
+        ad.setImages(source.getImages());
         List<Category> categories = categoryService.getCategories().collectList().block();
         for(Category cat : categories){
             String catid1 = cat.getId();
             String catid2 = source.getCategoryId();
-            log.error(catid1 + "da");
-            log.error(catid2 + "da");
-            log.error("");
             if(catid1.equals(catid2)){
-                log.error("FDSAFASFGFADGFADGD");
                 ad.setCategory(cat);
                 break;
             }
