@@ -5,13 +5,14 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
+import java.util.UUID;
 
 @Getter
 @Setter
 @Document
 public class Category {
     @Id
-    private String Id;
+    private String Id = UUID.randomUUID().toString();
     private String description;
     private Byte[] image;
 

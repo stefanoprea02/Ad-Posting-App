@@ -13,7 +13,7 @@
 <body>
     <nav class="navbar navbar-light navbar-expand-lg">
         <div class="container-fluid" style="display: flex; justify-content: space-between">
-            <a class="navbar-brand">Home</a>
+            <a class="navbar-brand" th:href="@{'/'}">Home</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -43,14 +43,24 @@
             </div>
         </div>
     </nav>
-    <div>
+    <div style="background-color: white; margin-top: 20px">
         <h2 class="title">Main Categories:</h2>
-        <div>
+        <div style="padding-bottom: 20px">
             <div class="categories" style="display: flex; justify-content: center; flex-wrap: wrap">
                 <a th:each="category : ${categories}" class="category">
                     <img th:src="@{'/images/' + ${category.getDescriptionToUrl()} + '.png'}" class="category-img">
                     <span th:text="${category.description}" ></span>
                 </a>
+            </div>
+        </div>
+    </div>
+    <div>
+        <h2 class="title">ADS:</h2>
+        <div class="ads">
+            <div th:each="ad : ${ads}" class="ad-home">
+                <img th:src="@{'/images/sport.png'}">
+                <p th:text="${ad.title}"></p>
+                <p th:text="${ad.price}"></p>
             </div>
         </div>
     </div>
