@@ -6,13 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +32,11 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
     @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event){
         if(categoryRepository.count().block() == 0)
-            loadCategories();
+            try {
+                loadCategories();
+            }catch (IOException e){
+                log.error(e.toString());
+            }
         else{
             System.out.println("NU");
         }
@@ -47,17 +52,33 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
 
     }
 
-    private void loadCategories(){
+    private void loadCategories() throws IOException {
 
         Set<String> categorii = new HashSet<>(Arrays.asList("Auto, moto si ambarcatiuni", "Imobiliare", "Locuri de munca",
                 "Electronice si electrocasnice", "Moda si frumusete", "Piese auto", "Casa si gradina",
                 "Mama si copilul", "Sport", "Animale de companie",
                 "Agro si industrie", "Servicii, afaceri, echipamente firme"));
 
-        for(String nume : categorii){
-            Category category = new Category();
-            category.setDescription(nume);
-            categoryRepository.save(category).block();
+        try {
+            for (String nume : categorii) {
+                Category category = new Category();
+                category.setDescription(nume);
+
+                String url = category.getDescriptionToUrl();
+                var resource = new ClassPathResource("static/images/" + url + ".png");
+                InputStream stream = resource.getInputStream();
+
+                byte[] fileContent = stream.readAllBytes();
+                category.setImage(fileContent);
+
+                categoryRepository.save(category).block();
+            }
+        } catch (IOException e){
+            log.error(String.valueOf(e));
+
+            e.printStackTrace();
+
+            throw(e);
         }
     }
 }

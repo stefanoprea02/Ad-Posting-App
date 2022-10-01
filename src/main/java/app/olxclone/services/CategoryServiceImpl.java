@@ -26,6 +26,11 @@ public class CategoryServiceImpl implements CategoryService{
     }
 
     @Override
+    public Mono<Category> findByDescription(String description) {
+        return categoryRepository.findByDescription(description);
+    }
+
+    @Override
     public Mono<Void> deleteById(String id) {
         return categoryRepository.deleteById(id);
     }

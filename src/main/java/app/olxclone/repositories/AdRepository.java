@@ -5,4 +5,5 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Mono;
 
 public interface AdRepository extends ReactiveMongoRepository<Ad, String> {
+    Mono<Ad> findByTitle(String title);
 }

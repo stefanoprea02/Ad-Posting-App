@@ -48,7 +48,7 @@
         <div style="padding-bottom: 20px">
             <div class="categories" style="display: flex; justify-content: center; flex-wrap: wrap">
                 <a th:each="category : ${categories}" class="category">
-                    <img th:src="@{'/images/' + ${category.getDescriptionToUrl()} + '.png'}" class="category-img">
+                    <img th:src="@{'/' + ${category.description} + '/image'}" class="category-img">
                     <span th:text="${category.description}" ></span>
                 </a>
             </div>
@@ -58,7 +58,7 @@
         <h2 class="title">ADS:</h2>
         <div class="ads">
             <div th:each="ad : ${ads}" class="ad-home">
-                <img th:src="@{'/' + ${ad.Id} + '/firstImage'}">
+                <img th:src="@{'/' + ${ad.title} + '/firstImage'}">
                 <p th:text="${ad.title}"></p>
                 <p th:text="${ad.price}"></p>
             </div>

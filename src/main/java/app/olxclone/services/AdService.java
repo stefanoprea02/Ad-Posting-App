@@ -11,6 +11,8 @@ public interface AdService {
 
     Mono<Ad> findById(String id);
 
+    Mono<Ad> findByTitle(String title);
+
     Mono<Void> deleteById(String id);
 
     Mono<AdCommand> saveAdCommand(AdCommand adCommand);

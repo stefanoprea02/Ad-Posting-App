@@ -14,7 +14,7 @@ public class Category {
     @Id
     private String Id = UUID.randomUUID().toString();
     private String description;
-    private Byte[] image;
+    private byte[] image;
 
     public String getDescriptionToUrl(){
         String newDescription = description.toLowerCase();

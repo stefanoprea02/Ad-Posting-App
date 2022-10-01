@@ -40,4 +40,9 @@ public class AdServiceImpl implements AdService{
     public Mono<AdCommand> saveAdCommand(AdCommand adCommand) {
         return adRepository.save(adCommandToAd.convert(adCommand)).map(adToAdCommand::convert);
     }
+
+    @Override
+    public Mono<Ad> findByTitle(String title) {
+        return adRepository.findByTitle(title);
+    }
 }

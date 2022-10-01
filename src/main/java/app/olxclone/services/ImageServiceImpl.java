@@ -22,7 +22,7 @@ public class ImageServiceImpl implements ImageService{
     @Transactional
     public void saveImageFile(String type, Long id, MultipartFile file) {
         try{
-            Byte[] byteObjects = new Byte[file.getBytes().length];
+            byte[] byteObjects = new byte[file.getBytes().length];
 
             int i = 0;
 

@@ -1,26 +1,26 @@
 package app.olxclone.controllers;
 
-import app.olxclone.FileUploadUtil;
 import app.olxclone.commands.AdCommand;
-import app.olxclone.domain.Category;
+import app.olxclone.domain.Ad;
 import app.olxclone.services.AdService;
 import app.olxclone.services.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Controller
+@CrossOrigin(origins = "http://localhost:3000")
 public class AdController {
     private final CategoryService categoryService;
     private final AdService adService;
@@ -30,49 +30,35 @@ public class AdController {
         this.adService = adService;
     }
 
-    @GetMapping("/ad/new")
-    public String newAd(Model model){
-        model.addAttribute("ad", new AdCommand());
-        model.addAttribute("categories", categoryService.getCategories().collectList().block());
-
-        Category cat = categoryService.getCategories().blockFirst();
-
-        return "adform";
+    @ResponseBody
+    @PostMapping("/ad/new")
+    public Map<String, Object> postAd(@Valid AdCommand adCommand, BindingResult result) {
+        Map<String, ArrayList<String>> cause = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
+        if(result.hasErrors()){
+            List<FieldError> errors = result.getFieldErrors();
+            for(FieldError e : errors){
+                if(cause.get(e.getField()) != null){
+                    ArrayList<String> list = cause.get(e.getField());
+                    list.add(e.getDefaultMessage());
+                    cause.put(e.getField(), list);
+                }else{
+                    ArrayList<String> list = new ArrayList<>();
+                    list.add(e.getDefaultMessage());
+                    cause.put(e.getField(), list);
+                }
+            }
+            response.put("error", cause);
+        }else{
+            AdCommand savedAd = adService.saveAdCommand(adCommand).block();
+            response.put("succes", savedAd);
+        }
+        return response;
     }
 
-    @PostMapping("/ad/")
-    public String postAd(@Valid @ModelAttribute("ad") AdCommand adCommand, BindingResult result, @RequestParam("imageFile")
-                         MultipartFile[] multipartFile, Model model) throws IOException {
-        if(result.hasErrors()){
-            result.getAllErrors().forEach(objectError -> {log.error(objectError.toString());});
-            model.addAttribute("categories", categoryService.getCategories().collectList().block());
-            return "adform";
-        }
-
-        String[] fileNames = new String[8];
-
-        try {
-            Byte[][] byteArrays = new Byte[8][];
-            int a = 0;
-
-            for (MultipartFile file : multipartFile) {
-                Byte[] byteArray = new Byte[file.getBytes().length];
-                int i = 0;
-                for(Byte b : file.getBytes()){
-                    byteArray[i++] = b;
-                }
-                byteArrays[a++] = byteArray;
-            }
-
-            adCommand.setImages(byteArrays);
-        }catch (IOException e){
-            log.error("Error occurred", e);
-
-            e.printStackTrace();
-        }
-
-        AdCommand savedAd = adService.saveAdCommand(adCommand).block();
-
-        return "redirect:/";
+    @ResponseBody
+    @GetMapping("/ads")
+    Flux<Ad> getAds(){
+        return adService.getAds();
     }
 }

@@ -9,5 +9,7 @@ public interface CategoryService {
 
     Mono<Category> findById(String id);
 
+    Mono<Category> findByDescription(String description);
+
     Mono<Void> deleteById(String id);
 }

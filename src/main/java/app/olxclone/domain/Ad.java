@@ -14,8 +14,8 @@ public class Ad {
     @Id
     private String Id = UUID.randomUUID().toString();
     private String title;
-    private Category category;
-    private Byte[][] images = new Byte[8][];
+    private String category;
+    private String[] images = new String[8];
     private String description;
     private String location;
     private String contact_info;
