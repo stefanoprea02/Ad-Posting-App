@@ -12,7 +12,7 @@ import java.util.UUID;
 @Document
 public class Category {
     @Id
-    private String Id = UUID.randomUUID().toString();
+    private String id = UUID.randomUUID().toString();
     private String description;
     private byte[] image;
 

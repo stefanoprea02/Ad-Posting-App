@@ -4,6 +4,7 @@ import app.olxclone.commands.AdCommand;
 import app.olxclone.domain.Ad;
 import app.olxclone.services.AdService;
 import app.olxclone.services.CategoryService;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
@@ -60,5 +61,11 @@ public class AdController {
     @GetMapping("/ads")
     Flux<Ad> getAds(){
         return adService.getAds();
+    }
+
+    @ResponseBody
+    @GetMapping("/ad/{adId}")
+    Mono<Ad> getAd(@PathVariable String adId){
+        return adService.findById(adId);
     }
 }

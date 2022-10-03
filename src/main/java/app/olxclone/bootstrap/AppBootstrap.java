@@ -1,12 +1,16 @@
 package app.olxclone.bootstrap;
 
 import app.olxclone.domain.Category;
+import app.olxclone.domain.User;
 import app.olxclone.repositories.CategoryRepository;
+import app.olxclone.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
@@ -23,6 +27,9 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
 
     @Autowired
     CategoryRepository categoryRepository;
+
+    @Autowired
+    UserRepository userRepository;
 
     public AppBootstrap(CategoryRepository categoryRepository){
         this.categoryRepository = categoryRepository;
@@ -58,6 +65,14 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
                 "Electronice si electrocasnice", "Moda si frumusete", "Piese auto", "Casa si gradina",
                 "Mama si copilul", "Sport", "Animale de companie",
                 "Agro si industrie", "Servicii, afaceri, echipamente firme"));
+
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        User user = new User();
+        user.setUsername("admin");
+        user.setPassword(passwordEncoder.encode("admin"));
+        user.setEmail("admin@gmail.com");
+        userRepository.save(user).block();
 
         try {
             for (String nume : categorii) {

@@ -1,10 +1,11 @@
 package app.olxclone.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import javax.persistence.Id;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.annotation.Id;
 import java.util.UUID;
 
 @Getter
@@ -12,7 +13,8 @@ import java.util.UUID;
 @Document
 public class Ad {
     @Id
-    private String Id = UUID.randomUUID().toString();
+    @Field("_id")
+    private String id = UUID.randomUUID().toString();
     private String title;
     private String category;
     private String[] images = new String[8];
