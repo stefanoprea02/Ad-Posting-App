@@ -21,7 +21,7 @@ import java.util.Map;
 
 @Slf4j
 @Controller
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AdController {
     private final CategoryService categoryService;
     private final AdService adService;
