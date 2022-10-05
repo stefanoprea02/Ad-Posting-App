@@ -24,15 +24,12 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> {
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    CategoryRepository categoryRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    public AppBootstrap(CategoryRepository categoryRepository){
+    public AppBootstrap(CategoryRepository categoryRepository, UserRepository userRepository) {
         this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
     }
 
     @Override

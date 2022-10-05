@@ -15,32 +15,41 @@ import reactor.core.publisher.Mono;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.apache.logging.log4j.util.Strings.isEmpty;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    public JwtFilter(UserRepository userRepository, JwtUtil jwtUtil){
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        //Get authorization header and validate
-        final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if(!StringUtils.hasText(header) || (StringUtils.hasText(header) && !header.startsWith("Bearer "))){
+        if(request.getCookies() == null){
             chain.doFilter(request, response);
             return;
         }
 
-        final String token = header.split(" ")[1].trim();
+        Optional<Cookie> jwtOpt = Arrays.stream(request.getCookies()).filter(cookie -> "jwt".equals(cookie.getName())).findAny();
 
+        if(jwtOpt.isEmpty()){
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String token = jwtOpt.get().getValue();
         UserDetails userDetails = userRepository.findByUsername(jwtUtil.extractUsername(token)).block();
 
         if(!jwtUtil.validateToken(token, userDetails)){
@@ -55,6 +64,7 @@ public class JwtFilter extends OncePerRequestFilter {
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
         chain.doFilter(request, response);
     }
 }
