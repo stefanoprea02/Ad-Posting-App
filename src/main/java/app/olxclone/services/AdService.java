@@ -1,8 +1,6 @@
 package app.olxclone.services;
 
-import app.olxclone.commands.AdCommand;
 import app.olxclone.domain.Ad;
-import app.olxclone.domain.Category;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -11,9 +9,9 @@ public interface AdService {
 
     Mono<Ad> findById(String id);
 
-    Mono<Ad> findByTitle(String title);
-
     Mono<Void> deleteById(String id);
 
-    Mono<AdCommand> saveAdCommand(AdCommand adCommand);
+    Mono<Ad> findByTitle(String title);
+
+    Mono<Ad> save(Ad ad);
 }

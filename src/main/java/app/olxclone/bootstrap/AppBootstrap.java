@@ -5,7 +5,6 @@ import app.olxclone.domain.User;
 import app.olxclone.repositories.CategoryRepository;
 import app.olxclone.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.ClassPathResource;
@@ -19,7 +18,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -44,16 +42,6 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
         else{
             System.out.println("NU");
         }
-
-        try{
-            TimeUnit.SECONDS.sleep(3);
-        }catch (InterruptedException ie){
-            Thread.currentThread().interrupt();
-        }
-
-        log.error("#######");
-        log.error("Count: " + categoryRepository.count().block().toString());
-
     }
 
     private void loadCategories() throws IOException {

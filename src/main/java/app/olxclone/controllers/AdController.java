@@ -1,10 +1,11 @@
 package app.olxclone.controllers;
 
-import app.olxclone.commands.AdCommand;
 import app.olxclone.domain.Ad;
+import app.olxclone.domain.User;
+import app.olxclone.repositories.UserRepository;
 import app.olxclone.services.AdService;
 import app.olxclone.services.CategoryService;
-import lombok.Getter;
+import app.olxclone.services.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
@@ -25,15 +26,19 @@ import java.util.Map;
 public class AdController {
     private final CategoryService categoryService;
     private final AdService adService;
+    private final UserService userService;
+    private final UserRepository userRepository;
 
-    public AdController(CategoryService categoryService, AdService adService){
+    public AdController(CategoryService categoryService, AdService adService, UserService userService, UserRepository userRepository){
         this.categoryService = categoryService;
         this.adService = adService;
+        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     @ResponseBody
     @PostMapping("/ad/new")
-    public Map<String, Object> postAd(@Valid AdCommand adCommand, BindingResult result) {
+    public Map<String, Object> postAd(@Valid Ad ad, BindingResult result) {
         Map<String, ArrayList<String>> cause = new HashMap<>();
         Map<String, Object> response = new HashMap<>();
         if(result.hasErrors()){
@@ -51,7 +56,11 @@ public class AdController {
             }
             response.put("error", cause);
         }else{
-            AdCommand savedAd = adService.saveAdCommand(adCommand).block();
+            Ad savedAd = adService.save(ad).block();
+            User user = userService.findByUsername(savedAd.getUsername()).block();
+            user.getAds().add(savedAd.getId());
+            User savedUser = userService.save(user).block();
+
             response.put("succes", savedAd);
         }
         return response;

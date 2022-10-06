@@ -7,7 +7,12 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.persistence.Id;
+import org.springframework.data.annotation.Id;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Getter
@@ -17,11 +22,21 @@ public class User implements UserDetails {
     @Id
     @Field("_id")
     private String id = UUID.randomUUID().toString();
+    @NotBlank
+    @Size(max = 20)
     private String username;
+    @NotBlank
+    @Size(max = 20)
     private String password;
+    @NotBlank
+    @Email
+    @Size(max = 40)
     private String email;
     //private List<Authority> authorities = new ArrayList<>();
-    private Set<Ad> ads = new HashSet<>();
+    private Set<String> ads = new HashSet<>();
+    private Set<String> favorites = new HashSet<>();
+    private LocalDate date = LocalDate.now();
+    private LocalDateTime lastOnline = LocalDateTime.now();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
