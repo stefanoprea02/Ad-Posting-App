@@ -24,9 +24,14 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public Mono<User> save(User user) {
+    public Mono<User> update(User user) {
         return userRepository.findById(user.getId())
                 .map(u -> user)
                 .flatMap(userRepository::save);
+    }
+
+    @Override
+    public Mono<User> save(User user) {
+        return userRepository.save(user);
     }
 }

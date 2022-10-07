@@ -8,5 +8,7 @@ public interface UserService {
 
     Mono<User> findById(String id);
 
+    Mono<User> update(User user);
+
     Mono<User> save(User user);
 }

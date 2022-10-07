@@ -22,14 +22,14 @@ public class User implements UserDetails {
     @Id
     @Field("_id")
     private String id = UUID.randomUUID().toString();
-    @NotBlank
-    @Size(max = 20)
+    @NotBlank(message = "Must not be blank")
+    @Size(min = 3, max = 20, message = "Must be between 3 and 20 characters long")
     private String username;
-    @NotBlank
-    @Size(max = 20)
+    @NotBlank(message = "Must not be blank")
+    @Size(min = 3, max = 20, message = "Must be between 3 and 20 characters long")
     private String password;
-    @NotBlank
-    @Email
+    @NotBlank(message = "Must not be blank")
+    @Email(message = "Must be a valid email")
     @Size(max = 40)
     private String email;
     //private List<Authority> authorities = new ArrayList<>();

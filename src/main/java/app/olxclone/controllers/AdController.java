@@ -7,6 +7,9 @@ import app.olxclone.services.AdService;
 import app.olxclone.services.CategoryService;
 import app.olxclone.services.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -15,13 +18,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Controller
+@ResponseBody
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class AdController {
     private final CategoryService categoryService;
@@ -36,7 +37,6 @@ public class AdController {
         this.userRepository = userRepository;
     }
 
-    @ResponseBody
     @PostMapping("/ad/new")
     public Map<String, Object> postAd(@Valid Ad ad, BindingResult result) {
         Map<String, ArrayList<String>> cause = new HashMap<>();
@@ -59,22 +59,42 @@ public class AdController {
             Ad savedAd = adService.save(ad).block();
             User user = userService.findByUsername(savedAd.getUsername()).block();
             user.getAds().add(savedAd.getId());
-            User savedUser = userService.save(user).block();
+            User savedUser = userService.update(user).block();
 
             response.put("succes", savedAd);
         }
         return response;
     }
 
-    @ResponseBody
     @GetMapping("/ads")
     Flux<Ad> getAds(){
         return adService.getAds();
     }
 
-    @ResponseBody
     @GetMapping("/ad/{adId}")
     Mono<Ad> getAd(@PathVariable String adId){
         return adService.findById(adId);
+    }
+
+    @GetMapping("/adFavorite/{adId}")
+    Mono<ResponseEntity<User>> adFovorite(@PathVariable String adId, @AuthenticationPrincipal User user){
+        user.getFavorites().add(adId);
+        Mono<ResponseEntity<User>> responseEntityMono = userService.update(user)
+                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
+        return responseEntityMono;
+    }
+
+    @GetMapping("/removeFavorite/{adId}")
+    Mono<ResponseEntity<User>> removeFavorite(@PathVariable String adId, @AuthenticationPrincipal User user){
+        user.getFavorites().remove(adId);
+        Mono<ResponseEntity<User>> responseEntityMono = userService.update(user)
+                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
+        return responseEntityMono;
+    }
+
+    @GetMapping("/checkFavorite/{adId}")
+    ResponseEntity<Boolean> checkFavorite(@PathVariable String adId, @AuthenticationPrincipal User user){
+        Boolean contains = user.getFavorites().contains(adId);
+        return new ResponseEntity<>(contains, HttpStatus.OK);
     }
 }
