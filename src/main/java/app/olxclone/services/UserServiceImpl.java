@@ -3,6 +3,7 @@ package app.olxclone.services;
 import app.olxclone.domain.User;
 import app.olxclone.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -33,5 +34,10 @@ public class UserServiceImpl implements UserService{
     @Override
     public Mono<User> save(User user) {
         return userRepository.save(user);
+    }
+
+    @Override
+    public Flux<User> findByUsernameLike(String text) {
+        return userRepository.findByUsernameLike(text);
     }
 }

@@ -12,4 +12,6 @@ public interface CategoryService {
     Mono<Category> findByDescription(String description);
 
     Mono<Void> deleteById(String id);
+
+    Flux<Category> findByDescriptionLike(String text);
 }

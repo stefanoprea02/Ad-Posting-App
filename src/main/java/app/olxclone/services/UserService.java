@@ -1,6 +1,7 @@
 package app.olxclone.services;
 
 import app.olxclone.domain.User;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface UserService {
@@ -11,4 +12,6 @@ public interface UserService {
     Mono<User> update(User user);
 
     Mono<User> save(User user);
+
+    Flux<User> findByUsernameLike(String text);
 }

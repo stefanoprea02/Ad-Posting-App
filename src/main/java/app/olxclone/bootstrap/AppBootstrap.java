@@ -46,10 +46,10 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
 
     private void loadCategories() throws IOException {
 
-        Set<String> categorii = new HashSet<>(Arrays.asList("Auto, moto si ambarcatiuni", "Imobiliare", "Locuri de munca",
-                "Electronice si electrocasnice", "Moda si frumusete", "Piese auto", "Casa si gradina",
-                "Mama si copilul", "Sport", "Animale de companie",
-                "Agro si industrie", "Servicii, afaceri, echipamente firme"));
+        Set<String> categorii = new HashSet<>(Arrays.asList("auto,-moto-and-boats", "houses", "jobs",
+                "electronics", "fashion-and-beauty", "auto-parts", "house-and-garden",
+                "mother-and-child", "sport", "pets",
+                "agriculture", "services,-business,-company-equipment"));
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -64,13 +64,13 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
                 Category category = new Category();
                 category.setDescription(nume);
 
-                String url = category.getDescriptionToUrl();
+                String url = category.getDescription();
                 var resource = new ClassPathResource("static/images/" + url + ".png");
                 InputStream stream = resource.getInputStream();
 
                 byte[] fileContent = stream.readAllBytes();
                 category.setImage(fileContent);
-
+                System.out.println(nume);
                 categoryRepository.save(category).block();
             }
         } catch (IOException e){

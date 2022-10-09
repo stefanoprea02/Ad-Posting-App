@@ -37,4 +37,9 @@ public class AdServiceImpl implements AdService{
     public Mono<Ad> findByTitle(String title) {
         return adRepository.findByTitle(title);
     }
+
+    @Override
+    public Flux<Ad> findByTitleLike(String text) {
+        return adRepository.findByTitleLike(text);
+    }
 }

@@ -25,7 +25,7 @@ public class Ad {
     @Size(min = 3, max = 255, message = "Must be between 3 and 255 characters long")
     private String title;
     @NotBlank(message = "Must not be blank")
-    private String categoryId;
+    private String categoryName;
     private String username;
     private String[] images = new String[8];
     @NotBlank(message = "Must not be blank")

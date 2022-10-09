@@ -97,4 +97,21 @@ public class AdController {
         Boolean contains = user.getFavorites().contains(adId);
         return new ResponseEntity<>(contains, HttpStatus.OK);
     }
+
+    @GetMapping("/ads/filter")
+    Flux<Ad> getAdsByFilter(@RequestParam(required = false) String favorite, @RequestParam(required = false) String category,
+                            @RequestParam(required = false) String username, @AuthenticationPrincipal User user){
+        Flux<Ad> ads = adService.getAds();
+        if(favorite != null) {
+            Set<String> favorites = user.getFavorites();
+            ads = ads.filter(x -> favorites.contains(x.getId()));
+        }
+        if(category != null){
+            ads = ads.filter(x -> x.getCategoryName().equals(category));
+        }
+        if(username != null){
+            ads = ads.filter(x -> x.getUsername().equals(username));
+        }
+        return ads;
+    }
 }

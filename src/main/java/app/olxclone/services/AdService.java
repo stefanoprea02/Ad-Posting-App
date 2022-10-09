@@ -14,4 +14,6 @@ public interface AdService {
     Mono<Ad> findByTitle(String title);
 
     Mono<Ad> save(Ad ad);
+
+    Flux<Ad> findByTitleLike(String text);
 }

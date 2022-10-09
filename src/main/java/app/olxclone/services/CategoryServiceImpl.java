@@ -34,4 +34,9 @@ public class CategoryServiceImpl implements CategoryService{
     public Mono<Void> deleteById(String id) {
         return categoryRepository.deleteById(id);
     }
+
+    @Override
+    public Flux<Category> findByDescriptionLike(String text) {
+        return categoryRepository.findByDescriptionLike(text);
+    }
 }
