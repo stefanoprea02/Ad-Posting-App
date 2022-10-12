@@ -107,6 +107,13 @@ public class AuthController {
         Map<String, ArrayList<String>> cause = new HashMap<>();
         Map<String, Object> response = new HashMap<>();
 
+        User checkIfUserExists = userService.findByUsername(user.getUsername()).block();
+        if(checkIfUserExists != null){
+            ArrayList<String> list = new ArrayList<>();
+            list.add("Username is already in use");
+            cause.put("username", list);
+        }
+
         if(result.hasErrors()){
             List<FieldError> errors = result.getFieldErrors();
             for(FieldError e : errors){
@@ -123,6 +130,10 @@ public class AuthController {
             response.put("error", cause);
             return ResponseEntity.ok().body(response);
         }else{
+            if(checkIfUserExists != null){
+                response.put("error", cause);
+                return ResponseEntity.ok().body(response);
+            }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             User savedUser = userService.save(user).block();
             String token = jwtUtil.generateToken(savedUser);

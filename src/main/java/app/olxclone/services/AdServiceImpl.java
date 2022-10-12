@@ -1,6 +1,7 @@
 package app.olxclone.services;
 
 import app.olxclone.domain.Ad;
+import app.olxclone.domain.User;
 import app.olxclone.repositories.AdRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -31,6 +32,13 @@ public class AdServiceImpl implements AdService{
     @Override
     public Mono<Ad> save(Ad ad) {
         return adRepository.save(ad);
+    }
+
+    @Override
+    public Mono<Ad> update(Ad ad) {
+        return adRepository.findById(ad.getId())
+                .map(u -> ad)
+                .flatMap(adRepository::save);
     }
 
     @Override

@@ -56,12 +56,19 @@ public class AdController {
             }
             response.put("error", cause);
         }else{
-            Ad savedAd = adService.save(ad).block();
-            User user = userService.findByUsername(savedAd.getUsername()).block();
-            user.getAds().add(savedAd.getId());
-            User savedUser = userService.update(user).block();
+            if(ad.getId().length() != 36){
+                ad.setId(UUID.randomUUID().toString());
+                Ad savedAd = adService.save(ad).block();
+                User user = userService.findByUsername(savedAd.getUsername()).block();
+                user.getAds().add(savedAd.getId());
+                User savedUser = userService.update(user).block();
 
-            response.put("succes", savedAd);
+                response.put("succes", savedAd);
+            }else {
+                Ad updatedAd = adService.update(ad).block();
+
+                response.put("succes", updatedAd);
+            }
         }
         return response;
     }
@@ -100,7 +107,8 @@ public class AdController {
 
     @GetMapping("/ads/filter")
     Flux<Ad> getAdsByFilter(@RequestParam(required = false) String favorite, @RequestParam(required = false) String category,
-                            @RequestParam(required = false) String username, @AuthenticationPrincipal User user){
+                            @RequestParam(required = false) String username, @RequestParam(required = false) String searchText,
+                            @AuthenticationPrincipal User user){
         Flux<Ad> ads = adService.getAds();
         if(favorite != null) {
             Set<String> favorites = user.getFavorites();
@@ -112,6 +120,20 @@ public class AdController {
         if(username != null){
             ads = ads.filter(x -> x.getUsername().equals(username));
         }
+        if(searchText != null){
+            ads = ads.filter(x -> x.getTitle().contains(searchText));
+        }
         return ads;
+    }
+
+    @GetMapping("/ads/delete")
+    Mono<ResponseEntity<User>> deleteAd(@RequestParam String adId, @AuthenticationPrincipal User user){
+        System.out.println(adId);
+        Mono<Void> adMono = adService.deleteById(adId);
+        adMono.block();
+        user.getAds().remove(adId);
+        Mono<ResponseEntity<User>> responseEntityMono = userService.update(user)
+                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
+        return responseEntityMono;
     }
 }
