@@ -63,6 +63,8 @@ public class AdController {
                 user.getAds().add(savedAd.getId());
                 User savedUser = userService.update(user).block();
 
+                Mono<?> mono = adService.save(ad).map(x -> userService.findByUsername(x.getUsername()).map(y -> y.getAds().add(x.getId())));
+
                 response.put("succes", savedAd);
             }else {
                 Ad updatedAd = adService.update(ad).block();
@@ -108,11 +110,17 @@ public class AdController {
     @GetMapping("/ads/filter")
     Flux<Ad> getAdsByFilter(@RequestParam(required = false) String favorite, @RequestParam(required = false) String category,
                             @RequestParam(required = false) String username, @RequestParam(required = false) String searchText,
+                            @RequestParam(required = false) String negotiable, @RequestParam(required = false) String state,
+                            @RequestParam(required = false) String minPrice, @RequestParam(required = false) String maxPrice,
                             @AuthenticationPrincipal User user){
         Flux<Ad> ads = adService.getAds();
         if(favorite != null) {
             Set<String> favorites = user.getFavorites();
-            ads = ads.filter(x -> favorites.contains(x.getId()));
+            if(favorite.equals("true")) {
+                ads = ads.filter(x -> favorites.contains(x.getId()));
+            }else{
+                ads = ads.filter(x -> !favorites.contains(x.getId()));
+            }
         }
         if(category != null){
             ads = ads.filter(x -> x.getCategoryName().equals(category));
@@ -122,6 +130,26 @@ public class AdController {
         }
         if(searchText != null){
             ads = ads.filter(x -> x.getTitle().contains(searchText));
+        }
+        if(negotiable != null){
+            if(negotiable.equals("true")){
+                ads = ads.filter(x -> x.getNegotiable().equals(true));
+            }else{
+                ads = ads.filter(x -> x.getNegotiable().equals(false));
+            }
+        }
+        if(state != null){
+            if(state.equals("Used")){
+                ads = ads.filter(x -> x.getState().equals("Used"));
+            }else{
+                ads = ads.filter(x -> x.getState().equals("New"));
+            }
+        }
+        if(minPrice != null){
+            ads = ads.filter(x -> Integer.parseInt(x.getPrice()) > Integer.parseInt(minPrice));
+        }
+        if(maxPrice != null){
+            ads = ads.filter(x -> Integer.parseInt(x.getPrice()) < Integer.parseInt(maxPrice));
         }
         return ads;
     }
