@@ -1,6 +1,7 @@
 package app.olxclone.bootstrap;
 
 import app.olxclone.domain.Category;
+import app.olxclone.domain.Role;
 import app.olxclone.domain.User;
 import app.olxclone.repositories.CategoryRepository;
 import app.olxclone.repositories.UserRepository;
@@ -11,12 +12,13 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -46,6 +48,8 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
 
     private void loadCategories() throws IOException {
 
+        System.out.println("DA");
+
         Set<String> categorii = new HashSet<>(Arrays.asList("auto,-moto-and-boats", "houses", "jobs",
                 "electronics", "fashion-and-beauty", "auto-parts", "house-and-garden",
                 "mother-and-child", "sport", "pets",
@@ -57,6 +61,7 @@ public class AppBootstrap implements ApplicationListener<ContextRefreshedEvent> 
         user.setUsername("admin");
         user.setPassword(passwordEncoder.encode("admin"));
         user.setEmail("admin@gmail.com");
+        user.setRoles(List.of(Role.ROLE_USER));
         userRepository.save(user).block();
 
         try {

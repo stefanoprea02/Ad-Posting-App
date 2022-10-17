@@ -7,6 +7,8 @@ import reactor.core.publisher.Mono;
 public interface UserService {
     Mono<User> findByUsername(String username);
 
+    Mono<Boolean> existsByUsername(String username);
+
     Mono<User> findById(String id);
 
     Mono<User> update(User user);

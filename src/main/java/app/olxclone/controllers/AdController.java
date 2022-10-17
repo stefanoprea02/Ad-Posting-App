@@ -1,5 +1,6 @@
 package app.olxclone.controllers;
 
+import app.olxclone.Util.JWTUtil;
 import app.olxclone.domain.Ad;
 import app.olxclone.domain.User;
 import app.olxclone.repositories.UserRepository;
@@ -9,10 +10,10 @@ import app.olxclone.services.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,50 +30,46 @@ public class AdController {
     private final AdService adService;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final JWTUtil jwtUtil;
 
-    public AdController(CategoryService categoryService, AdService adService, UserService userService, UserRepository userRepository){
+    public AdController(CategoryService categoryService, AdService adService, UserService userService, UserRepository userRepository, JWTUtil jwtUtil){
         this.categoryService = categoryService;
         this.adService = adService;
         this.userService = userService;
         this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/ad/new")
-    public Map<String, Object> postAd(@Valid Ad ad, BindingResult result) {
-        Map<String, ArrayList<String>> cause = new HashMap<>();
-        Map<String, Object> response = new HashMap<>();
-        if(result.hasErrors()){
-            List<FieldError> errors = result.getFieldErrors();
-            for(FieldError e : errors){
-                if(cause.get(e.getField()) != null){
-                    ArrayList<String> list = cause.get(e.getField());
-                    list.add(e.getDefaultMessage());
-                    cause.put(e.getField(), list);
-                }else{
-                    ArrayList<String> list = new ArrayList<>();
-                    list.add(e.getDefaultMessage());
-                    cause.put(e.getField(), list);
-                }
-            }
-            response.put("error", cause);
-        }else{
-            if(ad.getId().length() != 36){
-                ad.setId(UUID.randomUUID().toString());
-                Ad savedAd = adService.save(ad).block();
-                User user = userService.findByUsername(savedAd.getUsername()).block();
-                user.getAds().add(savedAd.getId());
-                User savedUser = userService.update(user).block();
+    public Mono<Ad> postAd(@Valid Ad ad, @CookieValue("jwt") String token) {
+        if(ad.getId().length() != 36){
+            ad.setId(UUID.randomUUID().toString());
 
-                Mono<?> mono = adService.save(ad).map(x -> userService.findByUsername(x.getUsername()).map(y -> y.getAds().add(x.getId())));
+            Mono<User> user = userService.findByUsername(jwtUtil.getUsernameFromToken(token));
 
-                response.put("succes", savedAd);
-            }else {
-                Ad updatedAd = adService.update(ad).block();
+            user.flatMap(user1 -> {
+                user1.getAds().add(ad.getId());
+                return userService.save(user1);
+            });
 
-                response.put("succes", updatedAd);
-            }
+            Mono<Ad> savedAd = adService.save(ad);
+
+            return savedAd;
+        }else {
+            return adService.update(ad);
         }
-        return response;
+    }
+
+    @GetMapping("/ads/delete")
+    Mono<?> deleteAd(@RequestParam String adId, @CookieValue("jwt") String token){
+        Mono<User> user = userService.findByUsername(jwtUtil.getUsernameFromToken(token));
+
+        user.map(user1 -> {
+            user1.getAds().remove(adId);
+            return userService.save(user1);
+        });
+
+        return adService.deleteById(adId);
     }
 
     @GetMapping("/ads")
@@ -86,25 +83,32 @@ public class AdController {
     }
 
     @GetMapping("/adFavorite/{adId}")
-    Mono<ResponseEntity<User>> adFovorite(@PathVariable String adId, @AuthenticationPrincipal User user){
-        user.getFavorites().add(adId);
-        Mono<ResponseEntity<User>> responseEntityMono = userService.update(user)
-                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
-        return responseEntityMono;
+    Mono<?> adFovorite(@PathVariable String adId, @CookieValue(name = "jwt") String token){
+        Mono<User> user = userService.findByUsername(jwtUtil.getUsernameFromToken(token));
+
+        return user.flatMap(user1 -> {
+            user1.getFavorites().add(adId);
+            return userService.update(user1);
+        });
     }
 
     @GetMapping("/removeFavorite/{adId}")
-    Mono<ResponseEntity<User>> removeFavorite(@PathVariable String adId, @AuthenticationPrincipal User user){
-        user.getFavorites().remove(adId);
-        Mono<ResponseEntity<User>> responseEntityMono = userService.update(user)
-                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
-        return responseEntityMono;
+    Mono<?> removeFavorite(@PathVariable String adId, @CookieValue(name = "jwt") String token){
+        Mono<User> user = userService.findByUsername(jwtUtil.getUsernameFromToken(token));
+
+        return user.flatMap(user1 -> {
+            user1.getFavorites().remove(adId);
+            return userService.update(user1);
+        });
     }
 
     @GetMapping("/checkFavorite/{adId}")
-    ResponseEntity<Boolean> checkFavorite(@PathVariable String adId, @AuthenticationPrincipal User user){
-        Boolean contains = user.getFavorites().contains(adId);
-        return new ResponseEntity<>(contains, HttpStatus.OK);
+    Mono<Boolean> checkFavorite(@PathVariable String adId, @CookieValue(name = "jwt") String token){
+        Mono<User> user = userService.findByUsername(jwtUtil.getUsernameFromToken(token));
+
+        user = user.filter(user1 -> user1.getFavorites().contains(adId));
+
+        return user.hasElement();
     }
 
     @GetMapping("/ads/filter")
@@ -112,14 +116,21 @@ public class AdController {
                             @RequestParam(required = false) String username, @RequestParam(required = false) String searchText,
                             @RequestParam(required = false) String negotiable, @RequestParam(required = false) String state,
                             @RequestParam(required = false) String minPrice, @RequestParam(required = false) String maxPrice,
-                            @AuthenticationPrincipal User user){
+                            @CookieValue(name = "jwt") String token){
         Flux<Ad> ads = adService.getAds();
         if(favorite != null) {
-            Set<String> favorites = user.getFavorites();
             if(favorite.equals("true")) {
-                ads = ads.filter(x -> favorites.contains(x.getId()));
+                ads = ads.filterWhen(x -> {
+                    final Mono<User>[] user = new Mono[]{userService.findByUsername(jwtUtil.getUsernameFromToken(token))};
+                    user[0] = user[0].filter(user1 -> user1.getFavorites().contains(x.getId()));
+                    return user[0].hasElement();
+                });
             }else{
-                ads = ads.filter(x -> !favorites.contains(x.getId()));
+                ads = ads.filterWhen(x -> {
+                    final Mono<User>[] user = new Mono[]{userService.findByUsername(jwtUtil.getUsernameFromToken(token))};
+                    user[0] = user[0].filter(user1 -> !user1.getFavorites().contains(x.getId()));
+                    return user[0].hasElement();
+                });
             }
         }
         if(category != null){
@@ -152,16 +163,5 @@ public class AdController {
             ads = ads.filter(x -> Integer.parseInt(x.getPrice()) < Integer.parseInt(maxPrice));
         }
         return ads;
-    }
-
-    @GetMapping("/ads/delete")
-    Mono<ResponseEntity<User>> deleteAd(@RequestParam String adId, @AuthenticationPrincipal User user){
-        System.out.println(adId);
-        Mono<Void> adMono = adService.deleteById(adId);
-        adMono.block();
-        user.getAds().remove(adId);
-        Mono<ResponseEntity<User>> responseEntityMono = userService.update(user)
-                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
-        return responseEntityMono;
     }
 }

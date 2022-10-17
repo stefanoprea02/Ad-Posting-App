@@ -1,7 +1,6 @@
 package app.olxclone.services;
 
 import app.olxclone.domain.Ad;
-import app.olxclone.domain.User;
 import app.olxclone.repositories.AdRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;

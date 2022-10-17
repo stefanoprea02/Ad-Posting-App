@@ -40,4 +40,9 @@ public class UserServiceImpl implements UserService{
     public Flux<User> findByUsernameLike(String text) {
         return userRepository.findByUsernameLike(text);
     }
+
+    @Override
+    public Mono<Boolean> existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
 }

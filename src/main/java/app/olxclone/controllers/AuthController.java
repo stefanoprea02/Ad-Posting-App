@@ -1,7 +1,8 @@
 package app.olxclone.controllers;
 
-import app.olxclone.Util.JwtUtil;
-import app.olxclone.domain.AuthCredentialsRequest;
+import app.olxclone.Util.JWTUtil;
+import app.olxclone.domain.AuthRequest;
+import app.olxclone.domain.Role;
 import app.olxclone.domain.User;
 import app.olxclone.services.UserService;
 import ch.qos.logback.core.util.Duration;
@@ -11,70 +12,58 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:3000", exposedHeaders = "Authorization", allowCredentials = "true")
 public class AuthController {
-    private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
-
+    private final JWTUtil jwtUtil;
     private final UserService userService;
 
     @Value("${cookies.domain}")
     private String domain;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UserService userService){
-        this.authenticationManager = authenticationManager;
+    public AuthController(JWTUtil jwtUtil, UserService userService){
         this.jwtUtil = jwtUtil;
         this.userService = userService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(AuthCredentialsRequest request){
-        try {
-            Authentication authenticate = authenticationManager
-                    .authenticate(
-                            new UsernamePasswordAuthenticationToken(
-                                    request.getUsername(),
-                                    request.getPassword()
-                            )
-                    );
-            User user = (User) authenticate.getPrincipal();
+    public Mono<ResponseEntity> login(Mono<AuthRequest> authRequest) {
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-            String token = jwtUtil.generateToken(user);
-            ResponseCookie cookie = ResponseCookie.from("jwt", token)
-                    .domain(domain)
-                    .path("/")
-                    .maxAge(Duration.buildByDays(365).getMilliseconds())
-                    .build();
-            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(token);
-        }catch (BadCredentialsException ex){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        return authRequest.flatMap(login -> {
+            return userService.findByUsername(login.getUsername())
+                    .filter(userDetails -> passwordEncoder.matches(login.getPassword(), userDetails.getPassword()))
+                    .map(userDetails -> {
+                        String token = jwtUtil.generateToken(userDetails);
+
+                        ResponseCookie cookie = ResponseCookie.from("jwt", token)
+                                .domain("127.0.0.1")
+                                .path("/")
+                                .maxAge(Duration.buildByDays(365).getMilliseconds())
+                                .build();
+                        HttpHeaders httpHeaders = new HttpHeaders();
+                        httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+                        httpHeaders.add(HttpHeaders.SET_COOKIE, cookie.toString());
+
+                        return ResponseEntity.ok().headers(httpHeaders).body(token);
+                    })
+                    .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
+        });
     }
 
     @GetMapping("/validate")
-    public ResponseEntity<?> validate(@CookieValue(name = "jwt") String token, @AuthenticationPrincipal User user){
+    public ResponseEntity<?> validate(@CookieValue(name = "jwt") String token){
         try {
-            Boolean isValid = jwtUtil.validateToken(token, user);
+            Boolean isValid = jwtUtil.validateToken(token);
             return ResponseEntity.ok(isValid);
         }catch (ExpiredJwtException e){
             return ResponseEntity.ok(false);
@@ -92,58 +81,20 @@ public class AuthController {
     }
 
     @GetMapping("/checkUsername/{username}")
-    public Mono<ResponseEntity<User>> checkUsername(@PathVariable String username){
-        Mono<ResponseEntity<User>> responseEntityMono = userService.findByUsername(username)
-                .map(x -> new ResponseEntity<>(x, HttpStatus.OK))
-                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+    public Mono<ResponseEntity<Boolean>> checkUsername(@PathVariable String username){
+        Mono<ResponseEntity<Boolean>> responseEntityMono = userService.existsByUsername(username)
+                .map(x -> new ResponseEntity<>(x, HttpStatus.OK));
 
         return responseEntityMono;
     }
 
-    @ResponseBody
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(@Valid User user, BindingResult result){
+    public Mono<User> register(@Valid User user){
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        Map<String, ArrayList<String>> cause = new HashMap<>();
-        Map<String, Object> response = new HashMap<>();
 
-        User checkIfUserExists = userService.findByUsername(user.getUsername()).block();
-        if(checkIfUserExists != null){
-            ArrayList<String> list = new ArrayList<>();
-            list.add("Username is already in use");
-            cause.put("username", list);
-        }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRoles(List.of(Role.ROLE_USER));
 
-        if(result.hasErrors()){
-            List<FieldError> errors = result.getFieldErrors();
-            for(FieldError e : errors){
-                if(cause.get(e.getField()) != null){
-                    ArrayList<String> list = cause.get(e.getField());
-                    list.add(e.getDefaultMessage());
-                    cause.put(e.getField(), list);
-                }else{
-                    ArrayList<String> list = new ArrayList<>();
-                    list.add(e.getDefaultMessage());
-                    cause.put(e.getField(), list);
-                }
-            }
-            response.put("error", cause);
-            return ResponseEntity.ok().body(response);
-        }else{
-            if(checkIfUserExists != null){
-                response.put("error", cause);
-                return ResponseEntity.ok().body(response);
-            }
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            User savedUser = userService.save(user).block();
-            String token = jwtUtil.generateToken(savedUser);
-            ResponseCookie cookie = ResponseCookie.from("jwt", token)
-                    .domain(domain)
-                    .path("/")
-                    .maxAge(Duration.buildByDays(365).getMilliseconds())
-                    .build();
-            response.put("token", token);
-            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(response);
-        }
+        return userService.save(user);
     }
 }

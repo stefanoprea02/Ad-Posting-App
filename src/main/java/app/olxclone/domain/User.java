@@ -1,10 +1,10 @@
 package app.olxclone.domain;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import org.springframework.data.annotation.Id;
@@ -14,10 +14,13 @@ import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @Document
+@NoArgsConstructor
+@AllArgsConstructor
 public class User implements UserDetails {
     @Id
     @Field("_id")
@@ -32,17 +35,17 @@ public class User implements UserDetails {
     @Email(message = "Must be a valid email")
     @Size(max = 40)
     private String email;
-    //private List<Authority> authorities = new ArrayList<>();
     private Set<String> ads = new HashSet<>();
     private Set<String> favorites = new HashSet<>();
     private LocalDate date = LocalDate.now();
     private LocalDateTime lastOnline = LocalDateTime.now();
+    private List<Role> roles;
+    private boolean active = true;
+    private String token;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> roles = new ArrayList<>();
-        roles.add(new Authority("ROLE_USER", id));
-        return roles;
+        return this.roles.stream().map(authority -> new SimpleGrantedAuthority(authority.name())).collect(Collectors.toList());
     }
 
     @Override

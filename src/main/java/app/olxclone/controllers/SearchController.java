@@ -6,11 +6,8 @@ import app.olxclone.domain.User;
 import app.olxclone.services.AdService;
 import app.olxclone.services.CategoryService;
 import app.olxclone.services.UserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @Controller
@@ -27,18 +24,18 @@ public class SearchController {
         this.adService = adService;
     }
 
-    @PostMapping("/search/username")
-    public Flux<User> searchUser(String searchText){
+    @GetMapping("/search/username/{searchText}")
+    public Flux<User> searchUser(@PathVariable String searchText){
         return userService.findByUsernameLike(searchText);
     }
 
-    @PostMapping("/search/ad")
-    public Flux<Ad> searchAd(String searchText){
+    @GetMapping("/search/ad/{searchText}")
+    public Flux<Ad> searchAd(@PathVariable String searchText){
         return adService.findByTitleLike(searchText);
     }
 
-    @PostMapping("/search/category")
-    public Flux<Category> searchCategory(String searchText){
+    @GetMapping("/search/category/{searchText}")
+    public Flux<Category> searchCategory(@PathVariable String searchText){
         return categoryService.findByDescriptionLike(searchText);
     }
 }
