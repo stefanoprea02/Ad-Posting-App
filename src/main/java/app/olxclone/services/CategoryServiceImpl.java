@@ -37,6 +37,6 @@ public class CategoryServiceImpl implements CategoryService{
 
     @Override
     public Flux<Category> findByDescriptionLike(String text) {
-        return categoryRepository.findByDescriptionLike(text);
+        return categoryRepository.findByDescriptionContainsIgnoreCase(text);
     }
 }

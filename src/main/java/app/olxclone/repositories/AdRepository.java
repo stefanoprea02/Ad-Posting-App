@@ -14,5 +14,5 @@ public interface AdRepository extends ReactiveMongoRepository<Ad, String> {
     @Query("{'id' :  ?0}")
     Mono<Ad> findById(String id);
 
-    Flux<Ad> findByTitleLike(String text);
+    Flux<Ad> findByTitleContainsIgnoreCase(String text);
 }

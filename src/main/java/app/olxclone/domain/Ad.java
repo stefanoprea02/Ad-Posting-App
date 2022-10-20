@@ -29,7 +29,7 @@ public class Ad {
     private String username;
     private String[] images = new String[8];
     @NotBlank(message = "Must not be blank")
-    @Size(min = 3, max = 255, message = "Must be between 3 and 255 characters long")
+    @Size(min = 3, max = 10000, message = "Must be between 3 and 255 characters long")
     private String description;
     @NotBlank(message = "Must not be blank")
     private String location;

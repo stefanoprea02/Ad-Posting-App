@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public Flux<User> findByUsernameLike(String text) {
-        return userRepository.findByUsernameLike(text);
+        return userRepository.findByUsernameContainsIgnoreCase(text);
     }
 
     @Override

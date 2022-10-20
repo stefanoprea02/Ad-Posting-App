@@ -16,7 +16,7 @@ public interface UserRepository extends ReactiveMongoRepository<User, String> {
     @Query("{'id' :  ?0}")
     Mono<User> findById(String id);
 
-    Flux<User> findByUsernameLike(String text);
+    Flux<User> findByUsernameContainsIgnoreCase(String text);
 
     Mono<User> save(User user);
 }

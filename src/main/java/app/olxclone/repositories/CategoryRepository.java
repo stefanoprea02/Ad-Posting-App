@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
 
 public interface CategoryRepository extends ReactiveMongoRepository<Category, String> {
     Mono<Category> findByDescription(String description);
-    Flux<Category> findByDescriptionLike(String text);
+    Flux<Category> findByDescriptionContainsIgnoreCase(String text);
 }

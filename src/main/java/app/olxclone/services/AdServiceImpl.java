@@ -47,6 +47,6 @@ public class AdServiceImpl implements AdService{
 
     @Override
     public Flux<Ad> findByTitleLike(String text) {
-        return adRepository.findByTitleLike(text);
+        return adRepository.findByTitleContainsIgnoreCase(text);
     }
 }
