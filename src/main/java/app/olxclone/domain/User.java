@@ -37,6 +37,7 @@ public class User implements UserDetails {
     private String email;
     private Set<String> ads = new HashSet<>();
     private Set<String> favorites = new HashSet<>();
+    private Set<String> conversations = new HashSet<>();
     private LocalDate date = LocalDate.now();
     private LocalDateTime lastOnline = LocalDateTime.now();
     private List<Role> roles;
